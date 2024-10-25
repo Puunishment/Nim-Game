@@ -1,0 +1,124 @@
+import random
+
+def display_piles(piles):
+    print("Current piles:")
+    for index, count in enumerate(piles):
+        print(f"Pile {index + 1}: {count}")
+    print()
+
+def get_input(prompt, valid_options):
+    while True:
+        try:
+            choice = int(input(prompt))
+            if choice in valid_options:
+                return choice
+            else:
+                print(f"Please choose a valid option from {valid_options}.")
+        except ValueError:
+            print("Invalid input! Please enter a number.")
+
+def player_move(player_name, piles):
+    print(f"{player_name}'s turn")
+    display_piles(piles)
+
+    available_piles = [i + 1 for i in range(len(piles)) if piles[i] > 0]
+    pile_choice = get_input(f"Choose a pile {available_piles}: ", available_piles) - 1
+
+    # Get a valid number of counters to remove
+    counters_to_remove = get_input(f"How many to remove from pile {pile_choice + 1} (1 to {piles[pile_choice]}): ", range(1, piles[pile_choice] + 1))
+    
+    piles[pile_choice] -= counters_to_remove
+
+def calculate_nim_sum(piles):
+    nim_sum = 0
+    for pile in piles:
+        nim_sum ^= pile
+    return nim_sum
+
+def bot_move(piles):
+    print("Bot's turn")
+    display_piles(piles)
+
+    nim_sum = calculate_nim_sum(piles)
+    available_piles = [i for i in range(len(piles)) if piles[i] > 0]
+
+# 70%
+    if random.random() < 0.7 and nim_sum != 0:
+        for pile_index in available_piles:
+            target_size = piles[pile_index] ^ nim_sum
+            if target_size < piles[pile_index]:
+                counters_to_remove = piles[pile_index] - target_size
+                print(f"Bot removes {counters_to_remove} from pile {pile_index + 1}.")
+                piles[pile_index] -= counters_to_remove
+                return
+    else:
+        # random pick
+        chosen_pile = random.choice(available_piles)
+        counters_to_remove = random.randint(1, piles[chosen_pile])
+        print(f"Bot removes {counters_to_remove} from pile {chosen_pile + 1}.")
+        piles[chosen_pile] -= counters_to_remove
+
+def is_game_over(piles):
+    return sum(piles) == 0
+
+def get_player_name(prompt):
+    while True:
+        name = input(prompt)
+        if name: 
+            return name
+        else:
+            print("Please enter a valid name.")
+
+def game_instructions():
+    print("Welcome to the game of Nim!")
+    print("Rules:")
+    print("1. There are three piles of counters.")
+    print("2. Players take turns choosing one pile and removing one or more counters from that pile.")
+    print("3. The player who takes the last counter loses the game.")
+    print("Good luck!")
+
+def set_piles():
+    piles = []
+    for i in range(1, 4):
+        pile_size = get_input(f"Set the number of counters for pile {i} (at least 1): ", range(1, 100))
+        piles.append(pile_size)
+    return piles
+
+def main():
+    game_instructions()
+
+    # Set up piles
+    piles = set_piles()  
+
+    mode = input("Play with a friend or a bot? (Enter 'friend' or 'bot'): ")
+    
+    player1_name = get_player_name("Enter name for Player 1: ")
+    
+    if mode == 'friend':
+        player2_name = get_player_name("Enter name for Player 2: ")
+        is_bot = False
+    else:
+        player2_name = "Bot"
+        is_bot = True
+
+    current_player = 1  # Player 1 starts
+    
+    while True:
+        if current_player == 1:
+            player_name = player1_name
+        else:
+            player_name = player2_name
+
+        if is_bot and current_player == 2:
+            bot_move(piles)
+        else:
+            player_move(player_name, piles)
+
+        # Check if the game is over
+        if is_game_over(piles):
+            print(f"{player_name} took the last counter. {player_name} loses!")
+            print(f"{player1_name if current_player == 2 else player2_name} wins!")
+            break
+
+        # Switch players
+        current_player = 3 - current_player
